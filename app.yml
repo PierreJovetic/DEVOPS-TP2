@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  backend:
+    build: ./simpleapi
+    networks:
+      - app-network
+    depends_on:
+      - database
+
+  database:
+    build: ./app_db
+    networks:
+      - app-network
+    environment:
+      POSTGRES_PASSWORD: toto
+    volumes:
+      - app-data:/var/lib/postgresql/data
+
+  httpd:
+    build: ./app_http
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+networks:
+  app-network:
+
+volumes:
+  app-data:
