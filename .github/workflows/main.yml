@@ -6,49 +6,64 @@ on:
   pull_request:
 
 jobs:
+
   test-backend:
     runs-on: ubuntu-22.04
     steps:
-     #checkout your github code using actions/checkout@v2.5.0
+      #checkout your github code using actions/checkout@v2.5.0
       - uses: actions/checkout@v2.5.0
 
-     #do the same with another action (actions/setup-java@v3) that enable to setup jdk 17
-      - name: Set up Java
+      #do the same with another action (actions/setup-java@v3) that enable to setup jdk 17
+      - name: Setup java
         uses: actions/setup-java@v3
         with:
           java-version: 17
           distribution: corretto
 
-     #finally build your app with the latest command
+      #finally build your app with the latest command
       - name: Build and test with Maven
         run: mvn clean verify --file simpleapi
+
+  # define job to build and publish docker image
   build-and-push-docker-image:
     needs: test-backend
+    # run only when code is compiling and tests are passing
     runs-on: ubuntu-22.04
-    steps:
-      - name: Login to Docker Hub
-        run: docker login -u ${{ secrets.USERNAME }} -p ${{ secrets.TOKEN}}
 
+    # steps to perform in job
+    steps:
       - name: Checkout code
         uses: actions/checkout@v2.5.0
 
-      -name: Build image and push backend
-       uses: actions/build-push-action@v3
-       with:
-         context: ./simpleapi
-         tags: ${{ secrets.USERNAME }}/tp-devops:simpleapi
-         push: ${{ github.ref == 'refs/heads/main' }}
+      - name: Login to DockerHub
+        run: docker login -u ${{ secrets.USERNAME }} -p ${{ secrets.TOKEN }}
 
-      -name: Build image and push database
-       uses: actions/build-push-action@v3
-       with:
-         context: ./app_db
-         tags: ${{ secrets.USERNAME }}/tp-devops:app_db
-         push: ${{ github.ref == 'refs/heads/main' }}
+      - name: Build image and push backend
+        uses: docker/build-push-action@v3
+        with:
+          # relative path to the place where source code with Dockerfile is located
+          context: ./simpleapi
+          # Note: tags has to be all lower-case
+          tags: ${{ secrets.USERNAME }}/tp_devops:simpleapi
+          # build on feature branches, push only on main branch
+          push: ${{ github.ref == 'refs/heads/main' }}
 
-      -name: Build image and push httpd
-       uses: actions/build-push-action@v3
-       with:
-         context: ./app_http
-         tags: ${{ secrets.USERNAME }}/tp-devops:app_http
-         push: ${{ github.ref == 'refs/heads/main' }}
+      - name: Build image and push database
+        uses: docker/build-push-action@v3
+        with:
+          # relative path to the place where source code with Dockerfile is located
+          context: ./app_db
+          # Note: tags has to be all lower-case
+          tags: ${{ secrets.USERNAME }}/tp_devops:app_db 
+          # build on feature branches, push only on main branch
+          push: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build image and push httpd
+        uses: docker/build-push-action@v3
+        with:
+          # relative path to the place where source code with Dockerfile is located
+          context: ./app_http
+          # Note: tags has to be all lower-case
+          tags: ${{ secrets.USERNAME }}/tp_devops:app_http
+          # build on feature branches, push only on main branch
+          push: ${{ github.ref == 'refs/heads/main' }}
