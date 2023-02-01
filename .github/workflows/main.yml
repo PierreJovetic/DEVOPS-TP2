@@ -2,11 +2,11 @@ name: CI devops 2023
 on:
   #to begin you want to launch this job in main and develop
   push:
-    branches: main  
+    branches: main
   pull_request:
 
 jobs:
-  test-backend: 
+  test-backend:
     runs-on: ubuntu-22.04
     steps:
      #checkout your github code using actions/checkout@v2.5.0
@@ -15,10 +15,40 @@ jobs:
      #do the same with another action (actions/setup-java@v3) that enable to setup jdk 17
       - name: Set up Java
         uses: actions/setup-java@v3
-        with: 
+        with:
           java-version: 17
           distribution: corretto
 
      #finally build your app with the latest command
       - name: Build and test with Maven
         run: mvn clean verify --file simpleapi
+  build-and-push-docker-image:
+    needs: test-backend
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.USERNAME }} -p ${{ secrets.TOKEN}}
+
+      - name: Checkout code
+        uses: actions/checkout@v2.5.0
+
+      -name: Build image and push backend
+       uses: actions/build-push-action@v3
+       with:
+         context: ./simpleapi
+         tags: ${{ secrets.USERNAME }}/tp-devops:simpleapi
+         push: ${{ github.ref == 'refs/heads/main' }}
+
+      -name: Build image and push database
+       uses: actions/build-push-action@v3
+       with:
+         context: ./app_db
+         tags: ${{ secrets.USERNAME }}/tp-devops:app_db
+         push: ${{ github.ref == 'refs/heads/main' }}
+
+      -name: Build image and push httpd
+       uses: actions/build-push-action@v3
+       with:
+         context: ./app_http
+         tags: ${{ secrets.USERNAME }}/tp-devops:app_http
+         push: ${{ github.ref == 'refs/heads/main' }}
