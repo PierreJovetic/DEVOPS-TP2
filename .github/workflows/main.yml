@@ -23,8 +23,9 @@ jobs:
       #finally build your app with the latest command
       - name: Build and test with Maven
         run: mvn clean verify --file simpleapi
+
       - name: Sonar Test
-        run: mvn -B verify sonar:sonar -Dsonar.projectKey=PierreJovetic_DEVOPS-TP2 -Dsonar.organization=pierrejovetic -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file ./simpleapi/pom.xml
+        run: mvn -B verify sonar:sonar -Dsonar.projectKey=PierreJovetic_DEVOPS-TP2 -Dsonar.organization=pierrejovetic -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file simpleapi
 
 
   # define job to build and publish docker image
